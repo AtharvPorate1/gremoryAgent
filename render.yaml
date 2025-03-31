@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: flask-server
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: ./start.sh
+    envVars:
+      - key: USER
+        sync: false
+      - key: BALANCE
+        sync: false
+      - key: SPECIAL_CODE
+        sync: false
