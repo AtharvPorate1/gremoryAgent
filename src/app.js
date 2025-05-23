@@ -1,7 +1,6 @@
 import express from "express";
-import { getAgentResponse } from "./agent/core.js"; // Import the function from core.js
 import dotenv from "dotenv";
-import agentRoutes from './routes/agent.js'
+import agentRoutes from "./routes/agent.js";
 dotenv.config();
 import cors from "cors";
 const app = express();
@@ -16,11 +15,7 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to our backend!" });
 });
 
-app.use('/api/agent', agentRoutes);
-
-
-
-
+app.use("/api/agent", agentRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

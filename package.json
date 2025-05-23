@@ -28,6 +28,7 @@
     "@langchain/core": "^0.3.57",
     "@langchain/langgraph": "^0.2.73",
     "@langchain/openai": "^0.5.11",
+    "@meteora-ag/dlmm": "^1.5.2",
     "@solana/web3.js": "^1.98.2",
     "ai": "^4.3.16",
     "bs58": "^6.0.0",

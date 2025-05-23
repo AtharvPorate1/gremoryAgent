@@ -3,7 +3,11 @@ import { AgentExecutor, createOpenAIToolsAgent } from "langchain/agents";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import dotenv from "dotenv";
 // import { createBalancePosition } from "../actions";
-import { createBalancePositionTool, getPositionsTool, removeLiquidityTool } from "./tools.js";
+import {
+  createBalancePositionTool,
+  getPositionsTool,
+  removeLiquidityTool,
+} from "./tools.js";
 
 dotenv.config();
 
@@ -11,13 +15,16 @@ dotenv.config();
 const tools = [
   createBalancePositionTool,
   getPositionsTool,
-  removeLiquidityTool 
+  removeLiquidityTool,
 ];
 
 // 2. Create the agent
 async function createAgent() {
   const prompt = ChatPromptTemplate.fromMessages([
-    ["system", "You are a helpful DeFi assistant specialized in Solana liquidity pools."],
+    [
+      "system",
+      "You are a helpful DeFi assistant specialized in Solana liquidity pools.",
+    ],
     ["human", "{input}"],
     ["placeholder", "{agent_scratchpad}"],
   ]);
@@ -42,19 +49,12 @@ async function createAgent() {
 }
 
 // 3. Run the agent with relevant queries
-async function runAgent() {
+export async function runAgent(prompt) {
   const agentExecutor = await createAgent();
-  
+
   // Test with relevant DLMM queries
   const result1 = await agentExecutor.invoke({
-    input: "remove all liquidity from the position",
+    input: prompt || "Hello can you list what can you do?",
   });
   console.log("Result 1:", result1.output);
-  
-//   const result2 = await agentExecutor.invoke({
-//     input: "Make a balanced position in the DLMM pool",
-//   });
-//   console.log("Result 2:", result2.output);
 }
-
-runAgent().catch(console.error);

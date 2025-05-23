@@ -1,8 +1,7 @@
-import {CipherSuite, DhkemP256HkdfSha256, HkdfSha256} from '@hpke/core';
-import {Chacha20Poly1305} from '@hpke/chacha20poly1305';
-import dotenv from 'dotenv';
+import { CipherSuite, DhkemP256HkdfSha256, HkdfSha256 } from "@hpke/core";
+import { Chacha20Poly1305 } from "@hpke/chacha20poly1305";
+import dotenv from "dotenv";
 dotenv.config();
-
 
 /**
  * Decrypts a message using HPKE (Hybrid Public Key Encryption).
@@ -21,13 +20,13 @@ dotenv.config();
 async function decryptHPKEMessage(
   privateKeyBase64,
   encapsulatedKeyBase64,
-  ciphertextBase64
+  ciphertextBase64,
 ) {
   // Initialize the cipher suite
   const suite = new CipherSuite({
     kem: new DhkemP256HkdfSha256(),
     kdf: new HkdfSha256(),
-    aead: new Chacha20Poly1305()
+    aead: new Chacha20Poly1305(),
   });
 
   // Convert base64 to ArrayBuffer using browser APIs
@@ -36,40 +35,48 @@ async function decryptHPKEMessage(
 
   // Import private key using WebCrypto
   const privateKey = await crypto.subtle.importKey(
-    'pkcs8',
+    "pkcs8",
     base64ToBuffer(privateKeyBase64),
     {
-      name: 'ECDH',
-      namedCurve: 'P-256'
+      name: "ECDH",
+      namedCurve: "P-256",
     },
     true,
-    ['deriveKey', 'deriveBits']
+    ["deriveKey", "deriveBits"],
   );
 
   // Create recipient context and decrypt
   const recipient = await suite.createRecipientContext({
     recipientKey: privateKey,
-    enc: base64ToBuffer(encapsulatedKeyBase64)
+    enc: base64ToBuffer(encapsulatedKeyBase64),
   });
 
-  return new TextDecoder().decode(await recipient.open(base64ToBuffer(ciphertextBase64)));
+  return new TextDecoder().decode(
+    await recipient.open(base64ToBuffer(ciphertextBase64)),
+  );
 }
-
-
 
 const privateKeyBase64 = process.env.SECRET_DECRYPTER_KEY;
 
 const response = {
-    encryption_type: "HPKE",
-    ciphertext: process.env.AGENT_CIPHERTEXT,
-    encapsulated_key: process.env.AGENT_ENCAPSULATED_KEY
-}
+  encryption_type: "HPKE",
+  ciphertext: process.env.AGENT_CIPHERTEXT,
+  encapsulated_key: process.env.AGENT_ENCAPSULATED_KEY,
+};
 
+const privateKey =  decryptHPKEMessage(
+  privateKeyBase64,
+  response.encapsulated_key,
+  response.ciphertext,
+)
+//   .then((decryptedMessage) => {
+//     console.log("Decrypted message:", decryptedMessage);
+    
+//   })
+//   .catch((error) => {
+//     console.error("Error decrypting message:", error);
+//   });
 
-export const privateKey = decryptHPKEMessage(privateKeyBase64, response.encapsulated_key, response.ciphertext)
-    .then((decryptedMessage) => {
-        console.log("Decrypted message:",typeof decryptedMessage);
-    })
-    .catch((error) => {
-        console.error("Error decrypting message:", error);
-    });
+export const getPrivateKey = async() => {
+    return privateKey;
+    }

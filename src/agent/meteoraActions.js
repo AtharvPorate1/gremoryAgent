@@ -1,16 +1,18 @@
-import BN from 'bn.js';
-import DLMM, { autoFillYByStrategy, StrategyType } from '@meteora-ag/dlmm';
-import { PublicKey, Keypair } from '@solana/web3.js';
-import { connection, user, USDC_USDT_POOL } from './config.js';
+import BN from "bn.js";
+import DLMM, { autoFillYByStrategy, StrategyType } from "@meteora-ag/dlmm";
+import { PublicKey, Keypair } from "@solana/web3.js";
+import { connection, user, USDC_USDT_POOL } from "../config/config.js";
 
 export async function createBalancePosition() {
   try {
-    const dlmm = ((DLMM)).default;
+    const dlmm = DLMM.default;
     const dlmmPool = await dlmm.create(connection, USDC_USDT_POOL);
 
     const activeBin = await dlmmPool.getActiveBin();
-    const activeBinPricePerToken = dlmmPool.fromPricePerLamport(Number(activeBin.price));
-    console.log('Active Bin Price (Per Token):', activeBinPricePerToken);
+    const activeBinPricePerToken = dlmmPool.fromPricePerLamport(
+      Number(activeBin.price),
+    );
+    console.log("Active Bin Price (Per Token):", activeBinPricePerToken);
 
     const TOTAL_RANGE_INTERVAL = 10;
     const minBinId = activeBin.binId - TOTAL_RANGE_INTERVAL;
@@ -25,81 +27,82 @@ export async function createBalancePosition() {
       activeBin.yAmount,
       minBinId,
       maxBinId,
-      StrategyType.Spot
+      StrategyType.Spot,
     );
 
     const newBalancePosition = Keypair.generate();
 
-    const createPositionTx = await dlmmPool.initializePositionAndAddLiquidityByStrategy({
-      positionPubKey: newBalancePosition.publicKey,
-      user: user.publicKey,
-      totalXAmount,
-      totalYAmount,
-      strategy: {
-        maxBinId,
-        minBinId,
-        strategyType: StrategyType.Spot,
-      },
-    });
+    const createPositionTx =
+      await dlmmPool.initializePositionAndAddLiquidityByStrategy({
+        positionPubKey: newBalancePosition.publicKey,
+        user: user.publicKey,
+        totalXAmount,
+        totalYAmount,
+        strategy: {
+          maxBinId,
+          minBinId,
+          strategyType: StrategyType.Spot,
+        },
+      });
 
     return { createPositionTx, newBalancePosition };
-
   } catch (error) {
-    console.error('Error in createBalancePosition:', error);
+    console.error("Error in createBalancePosition:", error);
     throw error;
   }
 }
 
-
- 
 export async function createImbalancedPosition(baseMint) {
   try {
-    const dlmm = ((DLMM)).default;
+    const dlmm = DLMM.default;
     const dlmmPool = await dlmm.create(connection, USDC_USDT_POOL);
 
     const activeBin = await dlmmPool.getActiveBin();
-    console.log('Active Bin Price (Per Token):', dlmmPool.fromPricePerLamport(Number(activeBin.price)));
+    console.log(
+      "Active Bin Price (Per Token):",
+      dlmmPool.fromPricePerLamport(Number(activeBin.price)),
+    );
 
     const TOTAL_RANGE_INTERVAL = 10;
     const minBinId = activeBin.binId - TOTAL_RANGE_INTERVAL;
     const maxBinId = activeBin.binId + TOTAL_RANGE_INTERVAL;
 
     const totalXAmount = new BN(0.02 * 10 ** 9);
-    const totalYAmount = new BN(0.5 * 10 ** 6); 
+    const totalYAmount = new BN(0.5 * 10 ** 6);
     const newImbalancePosition = Keypair.generate();
 
-    const createPositionTx = await dlmmPool.initializePositionAndAddLiquidityByStrategy({
-      positionPubKey: newImbalancePosition.publicKey,
-      user: user.publicKey,
-      totalXAmount,
-      totalYAmount,
-      strategy: {
-        maxBinId,
-        minBinId,
-        strategyType: StrategyType.Spot,
-      },
-    });
+    const createPositionTx =
+      await dlmmPool.initializePositionAndAddLiquidityByStrategy({
+        positionPubKey: newImbalancePosition.publicKey,
+        user: user.publicKey,
+        totalXAmount,
+        totalYAmount,
+        strategy: {
+          maxBinId,
+          minBinId,
+          strategyType: StrategyType.Spot,
+        },
+      });
 
     return { createPositionTx, newImbalancePosition };
-
   } catch (error) {
-    console.error('Error in createImbalancedPosition:', error);
+    console.error("Error in createImbalancedPosition:", error);
     throw error;
   }
 }
 
 export async function getUserPositions() {
   try {
-    const dlmm = ((DLMM)).default;
+    const dlmm = DLMM.default;
     const dlmmPool = await dlmm.create(connection, USDC_USDT_POOL);
 
     // Get all positions for the user
     const { userPositions } = await dlmmPool.getPositionsByUserAndLbPair(
-      user.publicKey
+      user.publicKey,
     );
 
     if (!userPositions || userPositions.length === 0) {
-      console.log('No positions found for this user');
+      console.log("No positions found for this user");
       return [];
     }
 
@@ -112,23 +115,28 @@ export async function getUserPositions() {
     //   lastUpdatedAt: new Date(position.positionData.lastUpdatedAt.toNumber() * 1000)
     // }));
 
-    return {userPositions};
-
+    return { userPositions };
   } catch (error) {
-    console.error('Error in getUserPositions:', error);
+    console.error("Error in getUserPositions:", error);
     throw error;
   }
 }
 
-
 // need to work on this
-export async function addLiquidityToPosition(positionPubKey, baseMint, strategyType = StrategyType.Spot) {
+export async function addLiquidityToPosition(
+  positionPubKey,
+  baseMint,
+  strategyType = StrategyType.Spot,
+) {
   try {
-    const dlmm = ((DLMM)).default;
+    const dlmm = DLMM.default;
     const dlmmPool = await dlmm.create(connection, USDC_USDT_POOL);
-    console.log('positionPubKey:', positionPubKey);
+    console.log("positionPubKey:", positionPubKey);
     const activeBin = await dlmmPool.getActiveBin();
-    console.log('Active Bin Price:', dlmmPool.fromPricePerLamport(Number(activeBin.price)));
+    console.log(
+      "Active Bin Price:",
+      dlmmPool.fromPricePerLamport(Number(activeBin.price)),
+    );
 
     const TOTAL_RANGE_INTERVAL = 10;
     const minBinId = activeBin.binId - TOTAL_RANGE_INTERVAL;
@@ -143,11 +151,10 @@ export async function addLiquidityToPosition(positionPubKey, baseMint, strategyT
       activeBin.yAmount,
       minBinId,
       maxBinId,
-      strategyType
+      strategyType,
     );
-    console.log('totalXAmount:', totalXAmount.toString());
-    console.log('totalYAmount:', totalYAmount.toString());
-
+    console.log("totalXAmount:", totalXAmount.toString());
+    console.log("totalYAmount:", totalYAmount.toString());
 
     const addLiquidityTx = await dlmmPool.addLiquidityByStrategy({
       positionPubKey: new PublicKey(positionPubKey),
@@ -160,36 +167,41 @@ export async function addLiquidityToPosition(positionPubKey, baseMint, strategyT
         strategyType,
       },
     });
-    console.log('addLiquidityTx:', addLiquidityTx);
+    console.log("addLiquidityTx:", addLiquidityTx);
     return { addLiquidityTx, positionPubKey };
-
   } catch (error) {
-    console.error('Error in addLiquidityToPosition:', error);
+    console.error("Error in addLiquidityToPosition:", error);
     throw error;
   }
 }
-
 
 export async function removeLiquidity(positionPubKey, options = {}) {
   try {
     const {
       shouldClaimAndClose = true,
       liquidityPercentage = 100, // 100% by default
-      skipPreflight = false
+      skipPreflight = false,
     } = options;
 
-    const dlmm = ((DLMM)).default;
+    const dlmm = DLMM.default;
     const dlmmPool = await dlmm.create(connection, USDC_USDT_POOL);
 
     // Get user positions
-    const { userPositions } = await dlmmPool.getPositionsByUserAndLbPair(user.publicKey);
-    const userPosition = userPositions.find(pos => pos.publicKey.equals(new PublicKey(positionPubKey)));
-    console.log('User Position:', userPosition);
+    const { userPositions } = await dlmmPool.getPositionsByUserAndLbPair(
+      user.publicKey,
+    );
+    const userPosition = userPositions.find((pos) =>
+      pos.publicKey.equals(new PublicKey(positionPubKey)),
+    );
+    console.log("User Position:", userPosition);
     if (!userPosition) {
       throw new Error(`Position ${positionPubKey} not found`);
     }
 
-    if (!userPosition.positionData || !userPosition.positionData.positionBinData) {
+    if (
+      !userPosition.positionData ||
+      !userPosition.positionData.positionBinData
+    ) {
       throw new Error(`Invalid position data for ${positionPubKey}`);
     }
 
@@ -199,15 +211,15 @@ export async function removeLiquidity(positionPubKey, options = {}) {
 
     // Get all bin IDs from the position and sort them
     const binIdsToRemove = userPosition.positionData.positionBinData
-      .map(bin => {
-        if (typeof bin.binId === 'undefined') {
+      .map((bin) => {
+        if (typeof bin.binId === "undefined") {
           throw new Error(`Invalid bin data in position ${positionPubKey}`);
         }
         return bin.binId;
       })
       .sort((a, b) => a - b);
 
-    console.log('Bin IDs to remove:', binIdsToRemove);
+    console.log("Bin IDs to remove:", binIdsToRemove);
 
     // Calculate BPS (100% = 100 * 100 basis points)
 
@@ -217,9 +229,8 @@ export async function removeLiquidity(positionPubKey, options = {}) {
     const percentageToRemove = 100;
     const bpsToRemove = new BN(Math.floor(percentageToRemove * 100));
 
-
     // Create remove liquidity transaction
-  const removeLiquidityTx = await dlmmPool.removeLiquidity({
+    const removeLiquidityTx = await dlmmPool.removeLiquidity({
       position: new PublicKey(positionPubKey),
       user: user.publicKey,
       fromBinId,
@@ -228,33 +239,33 @@ export async function removeLiquidity(positionPubKey, options = {}) {
       shouldClaimAndClose: true,
     });
 
-    console.log('Remove Liquidity Transaction:', removeLiquidityTx);
+    console.log("Remove Liquidity Transaction:", removeLiquidityTx);
 
     return {
       removeLiquidityTx,
       positionPubKey,
       binIds: binIdsToRemove,
       liquidityPercentage,
-      skipPreflight
+      skipPreflight,
     };
-
   } catch (error) {
-    console.error('Error in removeLiquidity:', error);
+    console.error("Error in removeLiquidity:", error);
     throw error;
   }
 }
 
-
 export async function prepareClaimFees() {
   try {
-    const dlmm = ((DLMM)).default;
+    const dlmm = DLMM.default;
     const dlmmPool = await dlmm.create(connection, USDC_USDT_POOL);
 
     // Get all user positions
-    const { userPositions } = await dlmmPool.getPositionsByUserAndLbPair(user.publicKey);
-    
+    const { userPositions } = await dlmmPool.getPositionsByUserAndLbPair(
+      user.publicKey,
+    );
+
     if (!userPositions || userPositions.length === 0) {
-      throw new Error('No positions found to claim fees');
+      throw new Error("No positions found to claim fees");
     }
 
     // Prepare claim transactions
@@ -265,72 +276,72 @@ export async function prepareClaimFees() {
 
     return {
       claimFeeTxs,
-      positionCount: userPositions.length
+      positionCount: userPositions.length,
     };
-
   } catch (error) {
-    console.error('Error in prepareClaimFees:', error);
+    console.error("Error in prepareClaimFees:", error);
     throw error;
   }
 }
 
-
 export async function prepareClosePosition(positionPubKey, options = {}) {
   try {
-    const {
-      skipPreflight = false,
-      commitment = "confirmed"
-    } = options;
+    const { skipPreflight = false, commitment = "confirmed" } = options;
 
-    const dlmm = ((DLMM)).default;
+    const dlmm = DLMM.default;
     const dlmmPool = await dlmm.create(connection, USDC_USDT_POOL);
 
     // Verify position exists
-    const { userPositions } = await dlmmPool.getPositionsByUserAndLbPair(user.publicKey);
-    const positionExists = userPositions.some(pos => 
-      pos.publicKey.equals(new PublicKey(positionPubKey))
+    const { userPositions } = await dlmmPool.getPositionsByUserAndLbPair(
+      user.publicKey,
     );
-    console.log('Position exists:', positionExists);
+    const positionExists = userPositions.some((pos) =>
+      pos.publicKey.equals(new PublicKey(positionPubKey)),
+    );
+    console.log("Position exists:", positionExists);
     if (!positionExists) {
-      throw new Error(`Position ${positionPubKey} not found or not owned by user`);
+      throw new Error(
+        `Position ${positionPubKey} not found or not owned by user`,
+      );
     }
 
-    console.log('Position PubKey:', new PublicKey(positionPubKey).toString());
+    console.log("Position PubKey:", new PublicKey(positionPubKey).toString());
     const closePositionTx = await dlmmPool.removeLiquidity({
       owner: user.publicKey,
       position: new PublicKey(positionPubKey), // Use the existing position key
     });
-    console.log('Close position transaction:', closePositionTx);
+    console.log("Close position transaction:", closePositionTx);
 
     return {
       closePositionTx,
       positionPubKey,
       transactionConfig: {
         skipPreflight,
-        commitment
-      }
+        commitment,
+      },
     };
-
   } catch (error) {
-    console.error('Error in prepareClosePosition:', error);
+    console.error("Error in prepareClosePosition:", error);
     throw error;
   }
 }
-
-
 
 export async function prepareSwap(amount, swapDirection, options = {}) {
   try {
     const {
       slippageBps = 50, // 0.5% slippage default
-      skipPreflight = false
+      skipPreflight = false,
     } = options;
 
-    const dlmm = ((DLMM)).default;
+    const dlmm = DLMM.default;
     const dlmmPool = await dlmm.create(connection, USDC_USDT_POOL);
 
     // Convert amount to BN with decimals
-    const swapAmount = new BN(amount * 10 ** (swapDirection ? dlmmPool.tokenY.decimals : dlmmPool.tokenX.decimals));
+    const swapAmount = new BN(
+      amount *
+        10 **
+          (swapDirection ? dlmmPool.tokenY.decimals : dlmmPool.tokenX.decimals),
+    );
     const swapYtoX = Boolean(swapDirection); // true = Y→X, false = X→Y
 
     // Get required bin arrays
@@ -341,7 +352,7 @@ export async function prepareSwap(amount, swapDirection, options = {}) {
       swapAmount,
       swapYtoX,
       new BN(slippageBps), // Slippage in basis points (1 = 0.01%)
-      binArrays
+      binArrays,
     );
 
     // Prepare swap transaction
@@ -352,20 +363,23 @@ export async function prepareSwap(amount, swapDirection, options = {}) {
       lbPair: dlmmPool.pubkey,
       user: user.publicKey,
       minOutAmount: swapQuote.minOutAmount,
-      outToken: swapYtoX ? dlmmPool.tokenX.publicKey : dlmmPool.tokenY.publicKey,
+      outToken: swapYtoX
+        ? dlmmPool.tokenX.publicKey
+        : dlmmPool.tokenY.publicKey,
     });
 
     return {
       swapTx,
       swapQuote,
-      direction: swapYtoX ? 'Y→X' : 'X→Y',
+      direction: swapYtoX ? "Y→X" : "X→Y",
       inputAmount: amount,
-      minOutput: swapQuote.minOutAmount / 10 ** (swapYtoX ? dlmmPool.tokenX.decimals : dlmmPool.tokenY.decimals),
-      transactionConfig: { skipPreflight }
+      minOutput:
+        swapQuote.minOutAmount /
+        10 ** (swapYtoX ? dlmmPool.tokenX.decimals : dlmmPool.tokenY.decimals),
+      transactionConfig: { skipPreflight },
     };
-
   } catch (error) {
-    console.error('Error in prepareSwap:', error);
+    console.error("Error in prepareSwap:", error);
     throw error;
   }
 }
