@@ -24,6 +24,10 @@
   "dependencies": {
     "@hpke/chacha20poly1305": "^1.6.2",
     "@hpke/core": "^1.7.2",
+    "@langchain/community": "^0.3.44",
+    "@langchain/core": "^0.3.57",
+    "@langchain/langgraph": "^0.2.73",
+    "@langchain/openai": "^0.5.11",
     "@solana/web3.js": "^1.98.2",
     "ai": "^4.3.16",
     "bs58": "^6.0.0",
