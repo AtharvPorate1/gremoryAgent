@@ -64,19 +64,19 @@ const response = {
   encapsulated_key: process.env.AGENT_ENCAPSULATED_KEY,
 };
 
-const privateKey =  decryptHPKEMessage(
+const privateKey = decryptHPKEMessage(
   privateKeyBase64,
   response.encapsulated_key,
   response.ciphertext,
-)
+);
 //   .then((decryptedMessage) => {
 //     console.log("Decrypted message:", decryptedMessage);
-    
+
 //   })
 //   .catch((error) => {
 //     console.error("Error decrypting message:", error);
 //   });
 
-export const getPrivateKey = async() => {
-    return privateKey;
-    }
+export const getPrivateKey = async () => {
+  return privateKey;
+};

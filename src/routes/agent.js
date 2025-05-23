@@ -41,8 +41,6 @@ router.post("/prompt", async (req, res) => {
   }
 });
 
-
-
 router.post("/rebalance", async (req, res) => {
   const prompt = "rebalance my portfolio";
 
