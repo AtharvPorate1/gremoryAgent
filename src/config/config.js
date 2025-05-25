@@ -9,5 +9,4 @@ export const USDC_USDT_POOL = new PublicKey(
   "5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6",
 );
 
-
 export const user = Keypair.fromSecretKey(bs58.decode(await getPrivateKey()));
