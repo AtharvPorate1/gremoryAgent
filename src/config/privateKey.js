@@ -22,61 +22,106 @@ async function decryptHPKEMessage(
   encapsulatedKeyBase64,
   ciphertextBase64,
 ) {
-  // Initialize the cipher suite
-  const suite = new CipherSuite({
-    kem: new DhkemP256HkdfSha256(),
-    kdf: new HkdfSha256(),
-    aead: new Chacha20Poly1305(),
-  });
+  try {
+    // Validate inputs
+    if (!privateKeyBase64 || !encapsulatedKeyBase64 || !ciphertextBase64) {
+      throw new Error('Missing required parameters for HPKE decryption');
+    }
 
-  // Convert base64 to ArrayBuffer using browser APIs
-  const base64ToBuffer = (base64) =>
-    Uint8Array.from(atob(base64), (c) => c.charCodeAt(0)).buffer;
+    // Initialize the cipher suite
+    const suite = new CipherSuite({
+      kem: new DhkemP256HkdfSha256(),
+      kdf: new HkdfSha256(),
+      aead: new Chacha20Poly1305(),
+    });
 
-  // Import private key using WebCrypto
-  const privateKey = await crypto.subtle.importKey(
-    "pkcs8",
-    base64ToBuffer(privateKeyBase64),
-    {
-      name: "ECDH",
-      namedCurve: "P-256",
-    },
-    true,
-    ["deriveKey", "deriveBits"],
-  );
+    // Convert base64 to ArrayBuffer with better error handling
+    const base64ToBuffer = (base64, paramName = 'parameter') => {
+      try {
+        const cleanBase64 = base64.replace(/\s/g, '');
+        return Uint8Array.from(atob(cleanBase64), (c) => c.charCodeAt(0)).buffer;
+      } catch (error) {
+        throw new Error(`Invalid base64 encoding for ${paramName}: ${error.message}`);
+      }
+    };
 
-  // Create recipient context and decrypt
-  const recipient = await suite.createRecipientContext({
-    recipientKey: privateKey,
-    enc: base64ToBuffer(encapsulatedKeyBase64),
-  });
+    // Clean and validate the private key
+    const cleanPrivateKey = privateKeyBase64.replace(/\s/g, '');
+    
+    // Import private key using WebCrypto with better error handling
+    let privateKey;
+    try {
+      privateKey = await crypto.subtle.importKey(
+        "pkcs8",
+        base64ToBuffer(cleanPrivateKey, 'private key'),
+        {
+          name: "ECDH",
+          namedCurve: "P-256",
+        },
+        true,
+        ["deriveKey", "deriveBits"],
+      );
+    } catch (keyError) {
+      throw new Error(`Failed to import private key: ${keyError.message}`);
+    }
 
-  return new TextDecoder().decode(
-    await recipient.open(base64ToBuffer(ciphertextBase64)),
-  );
+    // Create recipient context and decrypt
+    const recipient = await suite.createRecipientContext({
+      recipientKey: privateKey,
+      enc: base64ToBuffer(encapsulatedKeyBase64, 'encapsulated key'),
+    });
+
+    const decryptedBuffer = await recipient.open(
+      base64ToBuffer(ciphertextBase64, 'ciphertext')
+    );
+
+    return new TextDecoder().decode(decryptedBuffer);
+    
+  } catch (error) {
+    console.error('HPKE Decryption Error:', error);
+    throw new Error(`Failed to decrypt HPKE message: ${error.message}`);
+  }
 }
 
+// Environment variable validation
 const privateKeyBase64 = process.env.SECRET_DECRYPTER_KEY;
+const agentCiphertext = process.env.AGENT_CIPHERTEXT;
+const agentEncapsulatedKey = process.env.AGENT_ENCAPSULATED_KEY;
+
+if (!privateKeyBase64) {
+  throw new Error('SECRET_DECRYPTER_KEY environment variable is not set');
+}
+
+if (!agentCiphertext) {
+  throw new Error('AGENT_CIPHERTEXT environment variable is not set');
+}
+
+if (!agentEncapsulatedKey) {
+  throw new Error('AGENT_ENCAPSULATED_KEY environment variable is not set');
+}
+
+// Debug logging (remove in production)
+console.log('Environment variables loaded:');
+console.log('- Private key length:', privateKeyBase64.length);
+console.log('- Ciphertext length:', agentCiphertext.length);
+console.log('- Encapsulated key length:', agentEncapsulatedKey.length);
 
 const response = {
   encryption_type: "HPKE",
-  ciphertext: process.env.AGENT_CIPHERTEXT,
-  encapsulated_key: process.env.AGENT_ENCAPSULATED_KEY,
+  ciphertext: agentCiphertext,
+  encapsulated_key: agentEncapsulatedKey,
 };
 
-const privateKey = decryptHPKEMessage(
+// Create the promise for the private key decryption
+const privateKeyPromise = decryptHPKEMessage(
   privateKeyBase64,
   response.encapsulated_key,
   response.ciphertext,
-);
-//   .then((decryptedMessage) => {
-//     console.log("Decrypted message:", decryptedMessage);
-
-//   })
-//   .catch((error) => {
-//     console.error("Error decrypting message:", error);
-//   });
+).catch((error) => {
+  console.error("Error decrypting message:", error);
+  throw error;
+});
 
 export const getPrivateKey = async () => {
-  return privateKey;
+  return await privateKeyPromise;
 };
