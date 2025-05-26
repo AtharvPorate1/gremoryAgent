@@ -78,5 +78,6 @@ const privateKey = await decryptHPKEMessage(
 //   });
 
 export const getPrivateKey = async () => {
+  console.log("Private key retrieved successfully", privateKey);
   return privateKey;
 };

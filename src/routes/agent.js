@@ -32,7 +32,7 @@ const telegramId = process.env.AGENT_TG_ID
 router.post("/prompt", async (req, res) => {
   // This function should not go in production
   const { prompt } = req.body;
-
+  console.log("Received prompt:", prompt);
   if (!prompt) {
     return res.status(400).json({ error: "Prompt is required" });
   }

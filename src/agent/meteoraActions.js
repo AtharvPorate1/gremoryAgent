@@ -1,12 +1,12 @@
 import BN from "bn.js";
-import DLMM, { autoFillYByStrategy, StrategyType } from "@meteora-ag/dlmm";
+import DLMM, { autoFillYByStrategy, getTokenDecimals, getTokensMintFromPoolAddress, StrategyType } from "@meteora-ag/dlmm";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { connection, user, USDC_USDT_POOL } from "../config/config.js";
 
 export async function createBalancePosition(poolAddress, amount) {
   try {
     const dlmm = DLMM.default;
-    
+    console.log("Creating balance position for pool:", poolAddress);
     const pool = new PublicKey(poolAddress);
     
     const poolInfo = await getTokensMintFromPoolAddress(connection, pool, {
@@ -39,7 +39,8 @@ export async function createBalancePosition(poolAddress, amount) {
       maxBinId,
       StrategyType.Spot,
     );
-
+    console.log("Total X Amount:", totalXAmount.toString());
+    console.log("Total Y Amount:", totalYAmount.toString());
     const newBalancePosition = Keypair.generate();
 
     const createPositionTx =
@@ -54,6 +55,7 @@ export async function createBalancePosition(poolAddress, amount) {
           strategyType: StrategyType.Spot,
         },
       });
+    console.log("Create Position Transaction:", createPositionTx);
 
     return { createPositionTx, newBalancePosition };
   } catch (error) {
@@ -61,6 +63,8 @@ export async function createBalancePosition(poolAddress, amount) {
     throw error;
   }
 }
+
+// createBalancePosition("5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6", 0.02)
 
 export async function createImbalancedPosition(baseMint) {
   try {

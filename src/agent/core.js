@@ -57,4 +57,7 @@ export async function runAgent(prompt) {
     input: prompt || "Hello can you list what can you do?",
   });
   console.log("Result 1:", result1.output);
+
+  
+  return result1.output;
 }
