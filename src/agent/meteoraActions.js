@@ -3,10 +3,20 @@ import DLMM, { autoFillYByStrategy, StrategyType } from "@meteora-ag/dlmm";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { connection, user, USDC_USDT_POOL } from "../config/config.js";
 
-export async function createBalancePosition() {
+export async function createBalancePosition(poolAddress, amount) {
   try {
     const dlmm = DLMM.default;
-    const dlmmPool = await dlmm.create(connection, USDC_USDT_POOL);
+    
+    const pool = new PublicKey(poolAddress);
+    
+    const poolInfo = await getTokensMintFromPoolAddress(connection, pool, {
+  cluster: 'mainnet-beta', // required to resolve the correct program ID
+});
+
+    const tokenXDecimals = await getTokenDecimals(connection, poolInfo.tokenXMint);
+  // const tokenYDecimals = await getTokenDecimals(connection, poolInfo.tokenYMint);
+
+    const dlmmPool = await dlmm.create(connection, pool);
 
     const activeBin = await dlmmPool.getActiveBin();
     const activeBinPricePerToken = dlmmPool.fromPricePerLamport(
@@ -18,7 +28,7 @@ export async function createBalancePosition() {
     const minBinId = activeBin.binId - TOTAL_RANGE_INTERVAL;
     const maxBinId = activeBin.binId + TOTAL_RANGE_INTERVAL;
 
-    const totalXAmount = new BN(0.002 * 10 ** 9);
+    const totalXAmount = new BN(amount * 10 ** tokenXDecimals);
     const totalYAmount = autoFillYByStrategy(
       activeBin.binId,
       dlmmPool.lbPair.binStep,
