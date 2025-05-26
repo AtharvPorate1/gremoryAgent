@@ -40,7 +40,7 @@ router.post("/prompt", async (req, res) => {
   try {
     const response = await runAgent(prompt);
     console.log("Response:", response);
-    sendMessage(telegramId, response);
+    await sendMessage(telegramId, response);
     res.json({ response });
   } catch (error) {
     console.error("Error in POST /:", error);
