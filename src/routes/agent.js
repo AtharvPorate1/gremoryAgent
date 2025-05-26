@@ -48,6 +48,28 @@ router.post("/prompt", async (req, res) => {
   }
 });
 
+
+// router.post("/sendmessage", async (req, res) => {
+//   // This function should not go in production
+//   const { prompt } = req.body;
+//   console.log("Received prompt:", prompt);
+//   if (!prompt) {
+//     return res.status(400).json({ error: "Prompt is required" });
+//   }
+
+//   try {
+//     // const response = await runAgent(prompt);
+//     console.log("Response:", prompt);
+//     sendMessage(telegramId, prompt);
+//     const response = "Message sent successfully";
+//     console.log("Response:", response);
+//     res.json({ response });
+//   } catch (error) {
+//     console.error("Error in POST /:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
+
 router.post("/rebalance", async (req, res) => {
   const prompt = "rebalance my portfolio";
 
