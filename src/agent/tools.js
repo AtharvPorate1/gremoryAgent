@@ -24,7 +24,8 @@ export const createBalancePositionTool = new DynamicStructuredTool({
       },
       amount: {
         type: "number",
-        description: "The amount of token X to deposit (in human-readable units, not lamports)",
+        description:
+          "The amount of token X to deposit (in human-readable units, not lamports)",
       },
       skipPreflight: {
         type: "boolean",
@@ -40,12 +41,19 @@ export const createBalancePositionTool = new DynamicStructuredTool({
     },
     required: ["poolAddress", "amount"],
   },
-  func: async ({ poolAddress, amount, skipPreflight = false, commitment = "confirmed" }) => {
+  func: async ({
+    poolAddress,
+    amount,
+    skipPreflight = false,
+    commitment = "confirmed",
+  }) => {
     try {
-      console.log("Creating balance position in pool with amount :", poolAddress, amount);
+      console.log(
+        "Creating balance position in pool with amount :",
+        poolAddress,
+        amount,
+      );
 
-
-    
       // 1. Create position instructions
       const result = await createBalancePosition(poolAddress, amount);
 
@@ -56,8 +64,10 @@ export const createBalancePositionTool = new DynamicStructuredTool({
         [user, result.newBalancePosition],
         { skipPreflight, commitment },
       );
-      console.log("Transaction executed successfully:",`https://explorer.solana.com/tx/${signature}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"}`,
-);
+      console.log(
+        "Transaction executed successfully:",
+        `https://explorer.solana.com/tx/${signature}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"}`,
+      );
       // 3. Return standardized success response
       return JSON.stringify({
         success: true,
@@ -86,7 +96,6 @@ export const createBalancePositionTool = new DynamicStructuredTool({
     }
   },
 });
- 
 
 /**
  * Fetches user's liquidity positions from DLMM pool

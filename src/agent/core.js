@@ -58,6 +58,5 @@ export async function runAgent(prompt) {
   });
   console.log("Result 1:", result1.output);
 
-  
   return result1.output;
 }

@@ -2,12 +2,13 @@ import { Router } from "express";
 import { runAgent } from "../agent/core.js";
 import { sendMessage } from "../config/telegram.js";
 import dotenv from "dotenv";
+import { createBalancePosition } from "../agent/meteoraActions.js";
+import { executeTransaction } from "../agent/txExecutor.js";
+import { connection, user } from "../config/config.js";
 dotenv.config();
 
 const router = Router();
-const telegramId = process.env.AGENT_TG_ID
-
-
+const telegramId = process.env.AGENT_TG_ID;
 
 /**
  * @route POST /
@@ -48,7 +49,6 @@ router.post("/prompt", async (req, res) => {
   }
 });
 
-
 // router.post("/sendmessage", async (req, res) => {
 //   // This function should not go in production
 //   const { prompt } = req.body;
@@ -80,6 +80,39 @@ router.post("/rebalance", async (req, res) => {
   try {
     const response = await getAgentResponse(prompt);
     res.json({ response });
+  } catch (error) {
+    console.error("Error in POST /:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/add-liquidity", async (req, res) => {
+  const { tokenAddress, amount } = req.body;
+  if (!tokenAddress || !amount) {
+    return res
+      .status(400)
+      .json({ error: "Token address and amount are required" });
+  }
+
+  try {
+    const tx = await createBalancePosition(tokenAddress, amount);
+    const result = await executeTransaction(
+      connection,
+      tx.createPositionTx,
+      [user, tx.newBalancePosition],
+      { skipPreflight: false, commitment: "confirmed" },
+    );
+    console.log(
+      "Transaction executed successfully:",
+      `https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"}`,
+    );
+    await sendMessage(
+      telegramId,
+      `Liquidity added successfully: [explorer](https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"})`,
+    );
+    res.json({
+      result: `Liquidity added successfully: https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"}`,
+    });
   } catch (error) {
     console.error("Error in POST /:", error);
     res.status(500).json({ error: "Internal server error" });

@@ -10,7 +10,6 @@ export const USDC_USDT_POOL = new PublicKey(
 );
 
 // const privateKey = (await getPrivateKey()) || "";
-const privateKey = await getPrivateKey() || "";
+const privateKey = (await getPrivateKey()) || "";
 console.log("Private Key:", privateKey);
 export const user = Keypair.fromSecretKey(bs58.decode(privateKey));
-

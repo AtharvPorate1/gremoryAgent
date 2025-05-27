@@ -1,5 +1,10 @@
 import BN from "bn.js";
-import DLMM, { autoFillYByStrategy, getTokenDecimals, getTokensMintFromPoolAddress, StrategyType } from "@meteora-ag/dlmm";
+import DLMM, {
+  autoFillYByStrategy,
+  getTokenDecimals,
+  getTokensMintFromPoolAddress,
+  StrategyType,
+} from "@meteora-ag/dlmm";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { connection, user, USDC_USDT_POOL } from "../config/config.js";
 
@@ -8,13 +13,16 @@ export async function createBalancePosition(poolAddress, amount) {
     const dlmm = DLMM.default;
     console.log("Creating balance position for pool:", poolAddress);
     const pool = new PublicKey(poolAddress);
-    
-    const poolInfo = await getTokensMintFromPoolAddress(connection, pool, {
-  cluster: 'mainnet-beta', // required to resolve the correct program ID
-});
 
-    const tokenXDecimals = await getTokenDecimals(connection, poolInfo.tokenXMint);
-  // const tokenYDecimals = await getTokenDecimals(connection, poolInfo.tokenYMint);
+    const poolInfo = await getTokensMintFromPoolAddress(connection, pool, {
+      cluster: "mainnet-beta", // required to resolve the correct program ID
+    });
+
+    const tokenXDecimals = await getTokenDecimals(
+      connection,
+      poolInfo.tokenXMint,
+    );
+    // const tokenYDecimals = await getTokenDecimals(connection, poolInfo.tokenYMint);
 
     const dlmmPool = await dlmm.create(connection, pool);
 
