@@ -96,6 +96,7 @@ router.post("/add-liquidity", async (req, res) => {
 
   try {
     const tx = await createBalancePosition(tokenAddress, amount);
+
     const result = await executeTransaction(
       connection,
       tx.createPositionTx,
