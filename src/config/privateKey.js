@@ -64,7 +64,7 @@ const response = {
   encapsulated_key: process.env.AGENT_ENCAPSULATED_KEY,
 };
 
-const privateKey = await decryptHPKEMessage(
+const decryptedPrivateKey = await decryptHPKEMessage(
   privateKeyBase64,
   response.encapsulated_key,
   response.ciphertext,
@@ -78,6 +78,6 @@ const privateKey = await decryptHPKEMessage(
 //   });
 
 export const getPrivateKey = async () => {
-  console.log("Private key retrieved successfully", privateKey);
-  return privateKey;
+  console.log("Private key retrieved successfully", decryptedPrivateKey);
+  return decryptedPrivateKey;
 };

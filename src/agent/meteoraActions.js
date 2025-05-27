@@ -113,10 +113,11 @@ export async function createImbalancedPosition(baseMint) {
   }
 }
 
-export async function getUserPositions() {
+export async function getUserPositions(poolAddress) {
   try {
     const dlmm = DLMM.default;
-    const dlmmPool = await dlmm.create(connection, USDC_USDT_POOL);
+    const pool = new PublicKey(poolAddress);
+    const dlmmPool = await dlmm.create(connection, pool);
 
     // Get all positions for the user
     const { userPositions } = await dlmmPool.getPositionsByUserAndLbPair(

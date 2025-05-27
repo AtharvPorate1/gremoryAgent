@@ -2,7 +2,7 @@ import { Router } from "express";
 import { runAgent } from "../agent/core.js";
 import { sendMessage } from "../config/telegram.js";
 import dotenv from "dotenv";
-import { createBalancePosition } from "../agent/meteoraActions.js";
+import { createBalancePosition, getUserPositions } from "../agent/meteoraActions.js";
 import { executeTransaction } from "../agent/txExecutor.js";
 import { connection, user } from "../config/config.js";
 dotenv.config();
@@ -119,5 +119,61 @@ router.post("/add-liquidity", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+
+
+router.post("/close-position", async (req, res) => {
+  const { tokenAddress, amount } = req.body;
+  if (!tokenAddress || !amount) {
+    return res
+      .status(400)
+      .json({ error: "Token address and amount are required" });
+  }
+
+  try {
+    const tx = await createBalancePosition(tokenAddress, amount);
+
+    const result = await executeTransaction(
+      connection,
+      tx.createPositionTx,
+      [user, tx.newBalancePosition],
+      { skipPreflight: false, commitment: "confirmed" },
+    );
+    console.log(
+      "Transaction executed successfully:",
+      `https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"}`,
+    );
+    await sendMessage(
+      telegramId,
+      `Liquidity added successfully: [explorer](https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"})`,
+    );
+    res.json({
+      result: `Liquidity added successfully: https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"}`,
+    });
+  } catch (error) {
+    console.error("Error in POST /:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+
+router.get("/get-positions", async (req, res) => {
+  try {
+    const poolAddress = req.body.poolAddress;
+    if (!poolAddress) {
+      return res.status(400).json({ error: "Pool address is required" });
+    }
+    // This is a placeholder for the actual logic to get positions
+    // You would typically fetch this from your database or blockchain
+    const positions = await getUserPositions(poolAddress)
+
+    res.json({ positions });
+  } catch (error) {
+    console.error("Error in GET /get-positions:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+);
 
 export default router;
