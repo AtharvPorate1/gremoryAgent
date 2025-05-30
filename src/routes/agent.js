@@ -2,7 +2,10 @@ import { Router } from "express";
 import { runAgent } from "../agent/core.js";
 import { sendMessage } from "../config/telegram.js";
 import dotenv from "dotenv";
-import { createBalancePosition, getUserPositions } from "../agent/meteoraActions.js";
+import {
+  createBalancePosition,
+  getUserPositions,
+} from "../agent/meteoraActions.js";
 import { executeTransaction } from "../agent/txExecutor.js";
 import { connection, user } from "../config/config.js";
 dotenv.config();
@@ -120,8 +123,6 @@ router.post("/add-liquidity", async (req, res) => {
   }
 });
 
-
-
 router.post("/close-position", async (req, res) => {
   const { tokenAddress, amount } = req.body;
   if (!tokenAddress || !amount) {
@@ -156,8 +157,6 @@ router.post("/close-position", async (req, res) => {
   }
 });
 
-
-
 router.get("/get-positions", async (req, res) => {
   try {
     const poolAddress = req.body.poolAddress;
@@ -166,14 +165,13 @@ router.get("/get-positions", async (req, res) => {
     }
     // This is a placeholder for the actual logic to get positions
     // You would typically fetch this from your database or blockchain
-    const positions = await getUserPositions(poolAddress)
+    const positions = await getUserPositions(poolAddress);
 
     res.json({ positions });
   } catch (error) {
     console.error("Error in GET /get-positions:", error);
     res.status(500).json({ error: "Internal server error" });
   }
-}
-);
+});
 
 export default router;
