@@ -4,6 +4,7 @@ import DLMM, {
   getTokenDecimals,
   getTokensMintFromPoolAddress,
   StrategyType,
+  getPositionsByUserAndLbPair
 } from "@meteora-ag/dlmm";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { connection, user, USDC_USDT_POOL } from "../config/config.js";
