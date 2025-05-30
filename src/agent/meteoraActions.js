@@ -113,17 +113,20 @@ export async function createImbalancedPosition(baseMint) {
   }
 }
 
-export async function getUserPositions(poolAddress) {
+export async function  getUserPositions(poolAddress) {
   try {
     const dlmm = DLMM.default;
+    console.log("poolAddress:", poolAddress);
     const pool = new PublicKey(poolAddress);
     const dlmmPool = await dlmm.create(connection, pool);
 
     // Get all positions for the user
-    const { userPositions } = await dlmmPool.getPositionsByUserAndLbPair(
-      user.publicKey,
+    const { userPositions } = await getPositionsByUserAndLbPair(
+      // user.publicKey,
+      "FEZ9iQRnDBAWkj6dV47EKoB3L289s659PGr7CmV9j3Wa"
     );
-
+    
+  
     if (!userPositions || userPositions.length === 0) {
       console.log("No positions found for this user");
       return [];
@@ -144,6 +147,8 @@ export async function getUserPositions(poolAddress) {
     throw error;
   }
 }
+
+getUserPositions(USDC_USDT_POOL.toString() )
 
 // need to work on this
 export async function addLiquidityToPosition(

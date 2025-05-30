@@ -57,7 +57,7 @@ async function decryptHPKEMessage(
 }
 
 const privateKeyBase64 = process.env.SECRET_DECRYPTER_KEY;
-
+console.log("Private key base64:", privateKeyBase64);
 const response = {
   encryption_type: "HPKE",
   ciphertext: process.env.AGENT_CIPHERTEXT,
