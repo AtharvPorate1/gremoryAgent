@@ -8,6 +8,7 @@ import {
 } from "../agent/meteoraActions.js";
 import { executeTransaction } from "../agent/txExecutor.js";
 import { connection, user } from "../config/config.js";
+import { createPoolViaAPI, getPoolInfo } from "../lib/poolHelper.js";
 dotenv.config();
 
 const router = Router();
@@ -99,7 +100,7 @@ router.post("/add-liquidity", async (req, res) => {
 
   try {
     const tx = await createBalancePosition(tokenAddress, amount);
-
+    
     const result = await executeTransaction(
       connection,
       tx.createPositionTx,
@@ -114,6 +115,19 @@ router.post("/add-liquidity", async (req, res) => {
       telegramId,
       `Liquidity added successfully: [explorer](https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"})`,
     );
+
+
+    const poolInfo = await getPoolInfo(tokenAddress);
+    const poolName = poolInfo && poolInfo.name ? poolInfo.name : "New Pool";
+    //add worker to handle this later
+    await createPoolViaAPI({
+      name: poolName,
+      poolAddress: tokenAddress,
+      tgId: telegramId,
+    });
+    
+
+
     res.json({
       result: `Liquidity added successfully: https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"}`,
     });
