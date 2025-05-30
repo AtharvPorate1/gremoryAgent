@@ -1,7 +1,7 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import {
   createBalancePosition,
-  getUserPositions,
+  // getUserPositions,
   removeLiquidity,
 } from "./meteoraActions.js";
 // import { executeTransaction } from "../executor.js";

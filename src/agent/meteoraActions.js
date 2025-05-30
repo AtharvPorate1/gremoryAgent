@@ -148,7 +148,7 @@ export async function createImbalancedPosition(baseMint) {
 //   }
 // }
 
-getUserPositions(USDC_USDT_POOL.toString());
+// getUserPositions(USDC_USDT_POOL.toString());
 
 // need to work on this
 export async function addLiquidityToPosition(
