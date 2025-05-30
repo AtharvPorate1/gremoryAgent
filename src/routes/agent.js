@@ -4,7 +4,7 @@ import { sendMessage } from "../config/telegram.js";
 import dotenv from "dotenv";
 import {
   createBalancePosition,
-  getUserPositions,
+  // getUserPositions,
 } from "../agent/meteoraActions.js";
 import { executeTransaction } from "../agent/txExecutor.js";
 import { connection, user } from "../config/config.js";
@@ -171,21 +171,21 @@ router.post("/close-position", async (req, res) => {
   }
 });
 
-router.get("/get-positions", async (req, res) => {
-  try {
-    const poolAddress = req.body.poolAddress;
-    if (!poolAddress) {
-      return res.status(400).json({ error: "Pool address is required" });
-    }
-    // This is a placeholder for the actual logic to get positions
-    // You would typically fetch this from your database or blockchain
-    const positions = await getUserPositions(poolAddress);
+// router.get("/get-positions", async (req, res) => {
+//   try {
+//     const poolAddress = req.body.poolAddress;
+//     if (!poolAddress) {
+//       return res.status(400).json({ error: "Pool address is required" });
+//     }
+//     // This is a placeholder for the actual logic to get positions
+//     // You would typically fetch this from your database or blockchain
+//     const positions = await getUserPositions(poolAddress);
 
-    res.json({ positions });
-  } catch (error) {
-    console.error("Error in GET /get-positions:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+//     res.json({ positions });
+//   } catch (error) {
+//     console.error("Error in GET /get-positions:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
 
 export default router;
