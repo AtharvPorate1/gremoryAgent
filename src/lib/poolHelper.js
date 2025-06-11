@@ -30,7 +30,7 @@ export async function createPoolViaAPI({ name, poolAddress, tgId }) {
   }
 
   try {
-    const response = await fetch('http://localhost:3000/api/agent/add-pool', {
+    const response = await fetch('https://46a6-2402-8100-3135-1953-9135-d945-fb85-cc53.ngrok-free.app/api/agent/add-pool', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
