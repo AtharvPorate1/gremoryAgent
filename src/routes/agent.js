@@ -119,14 +119,15 @@ router.post("/add-liquidity", async (req, res) => {
 
     const poolInfo = await getPoolInfo(tokenAddress);
     const poolName = poolInfo && poolInfo.name ? poolInfo.name : "New Pool";
+    console.log("Starting pool creation process...");
     //add worker to handle this later
-    await createPoolViaAPI({
+    const poolcreationres = await createPoolViaAPI({
       name: poolName,
       poolAddress: tokenAddress,
       tgId: telegramId,
     });
     
-
+    console.log("Pool creation process completed successfully.", poolcreationres);
 
     res.json({
       result: `Liquidity added successfully: https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"}`,
