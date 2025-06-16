@@ -51,12 +51,10 @@ async function getTokenDecimalsFromMint(mintAddress) {
  */
 async function getJupiterQuote(inputMint, outputMint, amount, slippageBps = 50) {
 
-        const url = `${JUPITER_QUOTE_API}?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount}&slippageBps=${slippageBps}&restrictIntermediateTokens=true`;
-    console.log(`Fetching Jupiter quote: ${url}`);
+
 
   try {
-        const resolvedAmount = await Promise.resolve(amount);
-
+ const resolvedAmount = await Promise.resolve(amount);
     const url = `${JUPITER_QUOTE_API}?inputMint=${inputMint}&outputMint=${outputMint}&amount=${resolvedAmount}&slippageBps=${slippageBps}&restrictIntermediateTokens=true`;
     console.log(`Fetching Jupiter quote: ${url}`);
     const response = await fetch(url);
@@ -79,8 +77,13 @@ async function getJupiterQuote(inputMint, outputMint, amount, slippageBps = 50) 
  */
 async function getTokenPriceInUsdc(tokenMint) {
   try {
-    const tokenDecimals = getTokenDecimalsFromMint(tokenMint);
-    const usdcMint = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'; // USDC mint
+    const tokenDecimals = await getTokenDecimalsFromMint(tokenMint);
+    const usdcMint = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+    // Ensure we have valid decimals
+    if (!tokenDecimals) {
+      throw new Error(`Could not determine decimals for token ${tokenMint}`);
+    }
 
     const quote = await getJupiterQuote(
       tokenMint,
@@ -89,14 +92,18 @@ async function getTokenPriceInUsdc(tokenMint) {
       50
     );
     
-    const tokenPriceUsdc = parseInt(quote.outAmount) / getTokenDecimalsFromMint(usdcMint);
+    if (!quote.outAmount) {
+      throw new Error('Invalid quote response - missing outAmount');
+    }
+
+    const usdcDecimals = await getTokenDecimalsFromMint(usdcMint);
+    const tokenPriceUsdc = parseInt(quote.outAmount) / usdcDecimals;
     return tokenPriceUsdc;
   } catch (error) {
     console.error(`Error getting token price for ${tokenMint}:`, error);
     throw error;
   }
 }
-
 /**
  * Calculate equal value split for SOL-[Token] pool
  * @param {number} solAmount - Total SOL amount to split
@@ -114,6 +121,9 @@ async function getEqualValueQuotes_SolToken(solAmount, targetTokenMint) {
 
     // Get current SOL price in USDC for reference
     const solPriceUsdc = await getTokenPriceInUsdc(SOL_MINT);
+    if (isNaN(solPriceUsdc)) {
+      throw new Error('Failed to get valid SOL price');
+    }
     console.log(`Current SOL price: $${solPriceUsdc} USDC`);
 
     // Calculate half value in USD
@@ -263,13 +273,13 @@ async function getEqualValueQuotes(solAmount, token1Mint, token2Mint) {
 
   // Determine the split type
   if (token1Mint === SOL_MINT) {
-    // SOL-[Token] pair - keep some SOL, convert rest to token2
+    console.log("SOL-[Token] pair - keep some SOL, convert rest to token2")
     return await getEqualValueQuotes_SolToken(solAmount, token2Mint);
   } else if (token2Mint === SOL_MINT) {
-    // [Token]-SOL pair - keep some SOL, convert rest to token1
+    console.log("[Token]-SOL pair - keep some SOL, convert rest to token1")
     return await getEqualValueQuotes_SolToken(solAmount, token1Mint);
   } else {
-    // [Token1]-[Token2] pair - convert all SOL to both tokens
+    console.log("[Token1]-[Token2] pair - convert all SOL to both tokens equally");
     return await getEqualValueQuotes_TokenToken(solAmount, token1Mint, token2Mint);
   }
 }
