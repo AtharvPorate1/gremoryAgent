@@ -15,4 +15,3 @@ console.log("Private Key:", privateKey);
 // export const user = Keypair.fromSecretKey(bs58.decode(privateKey));
 export const user = Keypair.fromSecretKey(bs58.decode(privateKey));
 
-

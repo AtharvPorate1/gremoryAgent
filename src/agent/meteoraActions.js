@@ -9,13 +9,14 @@ import DLMM, {
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { connection, user, USDC_USDT_POOL } from "../config/config.js";
 import { processEqualValueSwap } from "../lib/solTokenSplitter.js";
+import { sendMessage } from "../config/telegram.js";
 
 export async function createBalancePosition(poolAddress, amount) {
   try {
     const dlmm = DLMM.default;
     console.log("Creating balance position for pool:", poolAddress);
     const pool = new PublicKey(poolAddress);
-
+    const newAmount = (Number(amount) - 0.0575 )/ 2; // Adjusted amount for equal value swap
     const poolInfo = await getTokensMintFromPoolAddress(connection, pool, {
       cluster: "mainnet-beta", // required to resolve the correct program ID
     });
@@ -24,8 +25,9 @@ export async function createBalancePosition(poolAddress, amount) {
       connection,
       poolInfo.tokenXMint,
     );
+    await sendMessage(`splitting ${amount} sol into equal value swap`);
     // const tokenYDecimals = await getTokenDecimals(connection, poolInfo.tokenYMint);
-    processEqualValueSwap(Number(amount), poolInfo.tokenXMint.toString(), poolInfo.tokenYMint.toString());
+    await processEqualValueSwap(Number(amount), poolInfo.tokenXMint.toString(), poolInfo.tokenYMint.toString());
 
     const dlmmPool = await dlmm.create(connection, pool);
 
@@ -39,7 +41,7 @@ export async function createBalancePosition(poolAddress, amount) {
     const minBinId = activeBin.binId - TOTAL_RANGE_INTERVAL;
     const maxBinId = activeBin.binId + TOTAL_RANGE_INTERVAL;
 
-    const totalXAmount = new BN(amount * 10 ** tokenXDecimals);
+    const totalXAmount = new BN(newAmount * 10 ** tokenXDecimals);
     const totalYAmount = autoFillYByStrategy(
       activeBin.binId,
       dlmmPool.lbPair.binStep,
