@@ -16,18 +16,22 @@ export async function createBalancePosition(poolAddress, amount) {
     const dlmm = DLMM.default;
     console.log("Creating balance position for pool:", poolAddress);
     const pool = new PublicKey(poolAddress);
-    const newAmount = (Number(amount) - 0.0575 )/ 2; // Adjusted amount for equal value swap
+    const newAmount = (Number(amount) - 0.0575) / 2; // Adjusted amount for equal value swap
     const poolInfo = await getTokensMintFromPoolAddress(connection, pool, {
       cluster: "mainnet-beta", // required to resolve the correct program ID
     });
-    
+
     const tokenXDecimals = await getTokenDecimals(
       connection,
       poolInfo.tokenXMint,
     );
     await sendMessage(`splitting ${amount} sol into equal value swap`);
     // const tokenYDecimals = await getTokenDecimals(connection, poolInfo.tokenYMint);
-    await processEqualValueSwap(Number(amount), poolInfo.tokenXMint.toString(), poolInfo.tokenYMint.toString());
+    await processEqualValueSwap(
+      Number(amount),
+      poolInfo.tokenXMint.toString(),
+      poolInfo.tokenYMint.toString(),
+    );
 
     const dlmmPool = await dlmm.create(connection, pool);
 

@@ -45,7 +45,7 @@ router.post("/prompt", async (req, res) => {
   try {
     const response = await runAgent(prompt);
     console.log("Response:", response);
-    await sendMessage( response );
+    await sendMessage(response);
     res.json({ response });
   } catch (error) {
     console.error("Error in POST /:", error);
@@ -100,7 +100,7 @@ router.post("/add-liquidity", async (req, res) => {
 
   try {
     const tx = await createBalancePosition(tokenAddress, amount);
-    
+
     const result = await executeTransaction(
       connection,
       tx.createPositionTx,
@@ -112,10 +112,8 @@ router.post("/add-liquidity", async (req, res) => {
       `https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"}`,
     );
     await sendMessage(
-
       `Liquidity added successfully: [explorer](https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"})`,
     );
-
 
     const poolInfo = await getPoolInfo(tokenAddress);
     const poolName = poolInfo && poolInfo.name ? poolInfo.name : "New Pool";
@@ -126,8 +124,11 @@ router.post("/add-liquidity", async (req, res) => {
       poolAddress: tokenAddress,
       tgId: telegramId,
     });
-    
-    console.log("Pool creation process completed successfully.", poolcreationres);
+
+    console.log(
+      "Pool creation process completed successfully.",
+      poolcreationres,
+    );
 
     res.json({
       result: `Liquidity added successfully: https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"}`,
@@ -160,7 +161,6 @@ router.post("/close-position", async (req, res) => {
       `https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"}`,
     );
     await sendMessage(
-
       `Liquidity added successfully: [explorer](https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"})`,
     );
     res.json({

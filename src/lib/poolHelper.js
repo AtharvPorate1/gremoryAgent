@@ -1,9 +1,6 @@
 import dotenv from "dotenv";
 
-
 dotenv.config();
-
-
 
 /**
  * Creates a new pool via API call to localhost
@@ -26,36 +23,38 @@ dotenv.config();
 export async function createPoolViaAPI({ name, poolAddress, tgId }) {
   // Validate required parameters
   if (!name || !poolAddress || !tgId) {
-    throw new Error('Missing required parameters: name, poolAddress, or tgId');
+    throw new Error("Missing required parameters: name, poolAddress, or tgId");
   }
 
   try {
-    const response = await fetch('https://46a6-2402-8100-3135-1953-9135-d945-fb85-cc53.ngrok-free.app/api/agent/add-pool', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
+    const response = await fetch(
+      "https://46a6-2402-8100-3135-1953-9135-d945-fb85-cc53.ngrok-free.app/api/agent/add-pool",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          poolAddress,
+          tgId: tgId.toString(), // Ensure tgId is stringified (handles bigint)
+        }),
       },
-      body: JSON.stringify({
-        name,
-        poolAddress,
-        tgId: tgId.toString() // Ensure tgId is stringified (handles bigint)
-      })
-    });
+    );
 
     const data = await response.json();
 
     // Handle API error responses
     if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Failed to create pool');
+      throw new Error(data.message || "Failed to create pool");
     }
 
     return data;
   } catch (error) {
-    console.error('API call failed:', error);
+    console.error("API call failed:", error);
     throw new Error(`Pool creation failed: ${error.message}`);
   }
 }
-
 
 /**
  * Fetches pool information from Meteora API for a given pair address.
@@ -68,19 +67,21 @@ export async function createPoolViaAPI({ name, poolAddress, tgId }) {
  * getPoolInfo("5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6").then(console.log).catch(console.error);
  */
 export async function getPoolInfo(pairAddress) {
-    if (!pairAddress) {
-        throw new Error("Missing required parameter: pairAddress");
-    }
+  if (!pairAddress) {
+    throw new Error("Missing required parameter: pairAddress");
+  }
 
-    try {
-        const response = await fetch(`https://dlmm-api.meteora.ag/pair/${pairAddress}`);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch pool info: ${response.statusText}`);
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Failed to fetch pool info:", error);
-        throw new Error(`getPoolInfo failed: ${error.message}`);
+  try {
+    const response = await fetch(
+      `https://dlmm-api.meteora.ag/pair/${pairAddress}`,
+    );
+    if (!response.ok) {
+      throw new Error(`Failed to fetch pool info: ${response.statusText}`);
     }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch pool info:", error);
+    throw new Error(`getPoolInfo failed: ${error.message}`);
+  }
 }

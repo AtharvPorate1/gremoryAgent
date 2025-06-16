@@ -1,17 +1,25 @@
-import { PublicKey, SendTransactionError, VersionedTransaction, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
-import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress } from "@solana/spl-token";
+import {
+  PublicKey,
+  SendTransactionError,
+  VersionedTransaction,
+  Transaction,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
+import {
+  createAssociatedTokenAccountInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
 import { connection, user } from "../config/config.js";
 import { sendMessage } from "../config/telegram.js";
 import { getTokenDecimals } from "@meteora-ag/dlmm";
 
-
 // const telegramId = process.env.AGENT_TG_ID;
-const SOL_MINT = 'So11111111111111111111111111111111111111112'; // Hardcoded SOL mint
+const SOL_MINT = "So11111111111111111111111111111111111111112"; // Hardcoded SOL mint
 const SOL_DECIMALS = 1_000_000_000; // 9 decimals
 
 // Jupiter API URLs
-const JUPITER_QUOTE_API = 'https://lite-api.jup.ag/swap/v1/quote';
-const JUPITER_SWAP_API = 'https://lite-api.jup.ag/swap/v1/swap';
+const JUPITER_QUOTE_API = "https://lite-api.jup.ag/swap/v1/quote";
+const JUPITER_SWAP_API = "https://lite-api.jup.ag/swap/v1/swap";
 
 // Fee constants
 const BIN_FEE_SOL = 0.0575; // SOL
@@ -19,13 +27,13 @@ const SOL_LAMPORTS = 1_000_000_000;
 
 // Token decimals mapping (for common tokens, can be expanded)
 const KNOWN_TOKEN_DECIMALS = {
-  'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 1_000_000,    // USDC
-  'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': 1_000_000,    // USDT
-  'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263': 100_000,      // BONK
-  'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm': 1_000_000,     // WIF
-  'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN': 1_000_000,      // JUP
-  '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R': 1_000_000,     // RAY
-  '6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN': 1_000_000      // TRUMP
+  EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: 1_000_000, // USDC
+  Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB: 1_000_000, // USDT
+  DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263: 100_000, // BONK
+  EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm: 1_000_000, // WIF
+  JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN: 1_000_000, // JUP
+  "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R": 1_000_000, // RAY
+  "6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN": 1_000_000, // TRUMP
 };
 
 /**
@@ -34,38 +42,43 @@ const KNOWN_TOKEN_DECIMALS = {
  * @returns {number} Token decimals (defaults to 6 if unknown)
  */
 async function getTokenDecimalsFromMint(mintAddress) {
-    const decimals = await getTokenDecimals(connection,new PublicKey(mintAddress))
-    if (decimals) {
-        return 10 ** decimals;
-    }
+  const decimals = await getTokenDecimals(
+    connection,
+    new PublicKey(mintAddress),
+  );
+  if (decimals) {
+    return 10 ** decimals;
+  }
   return KNOWN_TOKEN_DECIMALS[mintAddress] || 1_000_000; // Default to 6 decimals
 }
 
 /**
  * Get quote from Jupiter API
  * @param {string} inputMint - Input token mint address
- * @param {string} outputMint - Output token mint address  
+ * @param {string} outputMint - Output token mint address
  * @param {number} amount - Amount in atomic units
  * @param {number} slippageBps - Slippage in basis points (default 50 = 0.5%)
  * @returns {Promise<Object>} Quote response from Jupiter
  */
-async function getJupiterQuote(inputMint, outputMint, amount, slippageBps = 50) {
-
-
-
+async function getJupiterQuote(
+  inputMint,
+  outputMint,
+  amount,
+  slippageBps = 50,
+) {
   try {
- const resolvedAmount = await Promise.resolve(amount);
+    const resolvedAmount = await Promise.resolve(amount);
     const url = `${JUPITER_QUOTE_API}?inputMint=${inputMint}&outputMint=${outputMint}&amount=${resolvedAmount}&slippageBps=${slippageBps}&restrictIntermediateTokens=true`;
     console.log(`Fetching Jupiter quote: ${url}`);
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const quoteData = await response.json();
     return quoteData;
   } catch (error) {
-    console.error('Error fetching Jupiter quote:', error);
+    console.error("Error fetching Jupiter quote:", error);
     throw error;
   }
 }
@@ -78,7 +91,7 @@ async function getJupiterQuote(inputMint, outputMint, amount, slippageBps = 50) 
 async function getTokenPriceInUsdc(tokenMint) {
   try {
     const tokenDecimals = await getTokenDecimalsFromMint(tokenMint);
-    const usdcMint = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+    const usdcMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
     // Ensure we have valid decimals
     if (!tokenDecimals) {
@@ -89,11 +102,11 @@ async function getTokenPriceInUsdc(tokenMint) {
       tokenMint,
       usdcMint,
       tokenDecimals, // 1 token in atomic units
-      50
+      50,
     );
-    
+
     if (!quote.outAmount) {
-      throw new Error('Invalid quote response - missing outAmount');
+      throw new Error("Invalid quote response - missing outAmount");
     }
 
     const usdcDecimals = await getTokenDecimalsFromMint(usdcMint);
@@ -114,7 +127,7 @@ async function getEqualValueQuotes_SolToken(solAmount, targetTokenMint) {
   try {
     const availableSol = solAmount - BIN_FEE_SOL;
     if (availableSol <= 0) {
-      throw new Error('Insufficient SOL amount after deducting fees');
+      throw new Error("Insufficient SOL amount after deducting fees");
     }
 
     console.log(`Available SOL after fees: ${availableSol} SOL`);
@@ -122,14 +135,14 @@ async function getEqualValueQuotes_SolToken(solAmount, targetTokenMint) {
     // Get current SOL price in USDC for reference
     const solPriceUsdc = await getTokenPriceInUsdc(SOL_MINT);
     if (isNaN(solPriceUsdc)) {
-      throw new Error('Failed to get valid SOL price');
+      throw new Error("Failed to get valid SOL price");
     }
     console.log(`Current SOL price: $${solPriceUsdc} USDC`);
 
     // Calculate half value in USD
     const totalValueUsdc = availableSol * solPriceUsdc;
     const halfValueUsdc = totalValueUsdc / 2;
-    
+
     console.log(`Total value: $${totalValueUsdc} USDC`);
     console.log(`Half value each: $${halfValueUsdc} USDC`);
 
@@ -142,43 +155,49 @@ async function getEqualValueQuotes_SolToken(solAmount, targetTokenMint) {
     const remainingSolLamports = Math.floor(remainingSol * SOL_LAMPORTS);
 
     console.log(`SOL to keep: ${solForHalf} SOL (${solLamports} lamports)`);
-    console.log(`SOL to convert to target token: ${remainingSol} SOL (${remainingSolLamports} lamports)`);
+    console.log(
+      `SOL to convert to target token: ${remainingSol} SOL (${remainingSolLamports} lamports)`,
+    );
 
     // Get quote for SOL to target token conversion
     const solToTokenQuote = await getJupiterQuote(
       SOL_MINT,
       targetTokenMint,
       remainingSolLamports,
-      50
+      50,
     );
 
-    const expectedTokenOutput = parseInt(solToTokenQuote.outAmount) / getTokenDecimalsFromMint(targetTokenMint);
+    const expectedTokenOutput =
+      parseInt(solToTokenQuote.outAmount) /
+      getTokenDecimalsFromMint(targetTokenMint);
 
     return {
       totalSolInput: solAmount,
       feesDeducted: BIN_FEE_SOL,
       availableSol: availableSol,
       solPriceUsdc: solPriceUsdc,
-      pairType: 'SOL-TOKEN',
+      pairType: "SOL-TOKEN",
       targetTokenMint: targetTokenMint,
       splits: {
         sol: {
           amount: solForHalf,
           lamports: solLamports,
-          valueUsdc: halfValueUsdc
+          valueUsdc: halfValueUsdc,
         },
         token: {
           solToConvert: remainingSol,
           solLamports: remainingSolLamports,
           expectedTokenOutput: expectedTokenOutput,
           valueUsdc: halfValueUsdc,
-          quote: solToTokenQuote
-        }
-      }
+          quote: solToTokenQuote,
+        },
+      },
     };
-
   } catch (error) {
-    console.error(`Error calculating equal value quotes for SOL-${targetTokenMint}:`, error);
+    console.error(
+      `Error calculating equal value quotes for SOL-${targetTokenMint}:`,
+      error,
+    );
     throw error;
   }
 }
@@ -190,15 +209,19 @@ async function getEqualValueQuotes_SolToken(solAmount, targetTokenMint) {
  * @param {string} token2Mint - Second target token mint address
  * @returns {Promise<Object>} Quote data for both tokens
  */
-async function getEqualValueQuotes_TokenToken(solAmount, token1Mint, token2Mint) {
+async function getEqualValueQuotes_TokenToken(
+  solAmount,
+  token1Mint,
+  token2Mint,
+) {
   try {
     const availableSol = solAmount - BIN_FEE_SOL;
     if (availableSol <= 0) {
-      throw new Error('Insufficient SOL amount after deducting fees');
+      throw new Error("Insufficient SOL amount after deducting fees");
     }
 
     console.log(`Available SOL after fees: ${availableSol} SOL`);
-    
+
     // Get current SOL price in USDC for reference
     const solPriceUsdc = await getTokenPriceInUsdc(SOL_MINT);
     console.log(`Current SOL price: $${solPriceUsdc} USDC`);
@@ -206,7 +229,7 @@ async function getEqualValueQuotes_TokenToken(solAmount, token1Mint, token2Mint)
     // Calculate total value and half values
     const totalValueUsdc = availableSol * solPriceUsdc;
     const halfValueUsdc = totalValueUsdc / 2;
-    
+
     console.log(`Total value: $${totalValueUsdc} USDC`);
     console.log(`Half value each: $${halfValueUsdc} USDC`);
 
@@ -216,24 +239,32 @@ async function getEqualValueQuotes_TokenToken(solAmount, token1Mint, token2Mint)
     const solLamportsToken1 = Math.floor(solForToken1 * SOL_LAMPORTS);
     const solLamportsToken2 = Math.floor(solForToken2 * SOL_LAMPORTS);
 
-    console.log(`SOL to convert to token1: ${solForToken1} SOL (${solLamportsToken1} lamports)`);
-    console.log(`SOL to convert to token2: ${solForToken2} SOL (${solLamportsToken2} lamports)`);
+    console.log(
+      `SOL to convert to token1: ${solForToken1} SOL (${solLamportsToken1} lamports)`,
+    );
+    console.log(
+      `SOL to convert to token2: ${solForToken2} SOL (${solLamportsToken2} lamports)`,
+    );
 
     // Get quotes for both conversions
     const [solToToken1Quote, solToToken2Quote] = await Promise.all([
       getJupiterQuote(SOL_MINT, token1Mint, solLamportsToken1, 50),
-      getJupiterQuote(SOL_MINT, token2Mint, solLamportsToken2, 50)
+      getJupiterQuote(SOL_MINT, token2Mint, solLamportsToken2, 50),
     ]);
 
-    const expectedToken1Output = parseInt(solToToken1Quote.outAmount) / getTokenDecimalsFromMint(token1Mint);
-    const expectedToken2Output = parseInt(solToToken2Quote.outAmount) / getTokenDecimalsFromMint(token2Mint);
+    const expectedToken1Output =
+      parseInt(solToToken1Quote.outAmount) /
+      getTokenDecimalsFromMint(token1Mint);
+    const expectedToken2Output =
+      parseInt(solToToken2Quote.outAmount) /
+      getTokenDecimalsFromMint(token2Mint);
 
     return {
       totalSolInput: solAmount,
       feesDeducted: BIN_FEE_SOL,
       availableSol: availableSol,
       solPriceUsdc: solPriceUsdc,
-      pairType: 'TOKEN-TOKEN',
+      pairType: "TOKEN-TOKEN",
       splits: {
         token1: {
           mint: token1Mint,
@@ -241,7 +272,7 @@ async function getEqualValueQuotes_TokenToken(solAmount, token1Mint, token2Mint)
           solLamports: solLamportsToken1,
           expectedTokenOutput: expectedToken1Output,
           valueUsdc: halfValueUsdc,
-          quote: solToToken1Quote
+          quote: solToToken1Quote,
         },
         token2: {
           mint: token2Mint,
@@ -249,13 +280,15 @@ async function getEqualValueQuotes_TokenToken(solAmount, token1Mint, token2Mint)
           solLamports: solLamportsToken2,
           expectedTokenOutput: expectedToken2Output,
           valueUsdc: halfValueUsdc,
-          quote: solToToken2Quote
-        }
-      }
+          quote: solToToken2Quote,
+        },
+      },
     };
-
   } catch (error) {
-    console.error(`Error calculating equal value quotes for ${token1Mint}-${token2Mint}:`, error);
+    console.error(
+      `Error calculating equal value quotes for ${token1Mint}-${token2Mint}:`,
+      error,
+    );
     throw error;
   }
 }
@@ -273,14 +306,20 @@ async function getEqualValueQuotes(solAmount, token1Mint, token2Mint) {
 
   // Determine the split type
   if (token1Mint === SOL_MINT) {
-    console.log("SOL-[Token] pair - keep some SOL, convert rest to token2")
+    console.log("SOL-[Token] pair - keep some SOL, convert rest to token2");
     return await getEqualValueQuotes_SolToken(solAmount, token2Mint);
   } else if (token2Mint === SOL_MINT) {
-    console.log("[Token]-SOL pair - keep some SOL, convert rest to token1")
+    console.log("[Token]-SOL pair - keep some SOL, convert rest to token1");
     return await getEqualValueQuotes_SolToken(solAmount, token1Mint);
   } else {
-    console.log("[Token1]-[Token2] pair - convert all SOL to both tokens equally");
-    return await getEqualValueQuotes_TokenToken(solAmount, token1Mint, token2Mint);
+    console.log(
+      "[Token1]-[Token2] pair - convert all SOL to both tokens equally",
+    );
+    return await getEqualValueQuotes_TokenToken(
+      solAmount,
+      token1Mint,
+      token2Mint,
+    );
   }
 }
 
@@ -291,13 +330,17 @@ async function getEqualValueQuotes(solAmount, token1Mint, token2Mint) {
  * @param {Object} options - Additional options for transaction optimization
  * @returns {Promise<Object>} Swap response with serialized transaction
  */
-async function createSwapTransaction(quoteResponse, userPublicKey, options = {}) {
+async function createSwapTransaction(
+  quoteResponse,
+  userPublicKey,
+  options = {},
+) {
   try {
     const {
       dynamicComputeUnitLimit = true,
       dynamicSlippage = true,
       maxLamports = 1000000,
-      priorityLevel = "veryHigh"
+      priorityLevel = "veryHigh",
     } = options;
 
     const swapRequestBody = {
@@ -308,32 +351,34 @@ async function createSwapTransaction(quoteResponse, userPublicKey, options = {})
       prioritizationFeeLamports: {
         priorityLevelWithMaxLamports: {
           maxLamports,
-          priorityLevel
-        }
-      }
+          priorityLevel,
+        },
+      },
     };
 
-    console.log('Creating swap transaction...');
+    console.log("Creating swap transaction...");
 
     const response = await fetch(JUPITER_SWAP_API, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(swapRequestBody)
+      body: JSON.stringify(swapRequestBody),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Swap API error! status: ${response.status}, message: ${errorText}`);
+      throw new Error(
+        `Swap API error! status: ${response.status}, message: ${errorText}`,
+      );
     }
 
     const swapResponse = await response.json();
-    console.log('Swap transaction created successfully');
-    
+    console.log("Swap transaction created successfully");
+
     return swapResponse;
   } catch (error) {
-    console.error('Error creating swap transaction:', error);
+    console.error("Error creating swap transaction:", error);
     throw error;
   }
 }
@@ -346,9 +391,9 @@ async function createTokenAccountIfNeeded(mintAddress) {
   try {
     const ata = await getAssociatedTokenAddress(
       new PublicKey(mintAddress),
-      user.publicKey
+      user.publicKey,
     );
-    
+
     const accountInfo = await connection.getAccountInfo(ata);
     if (!accountInfo) {
       console.log(`Creating token account for ${mintAddress}`);
@@ -357,8 +402,9 @@ async function createTokenAccountIfNeeded(mintAddress) {
           user.publicKey,
           ata,
           user.publicKey,
-          new PublicKey(mintAddress)
-      ));
+          new PublicKey(mintAddress),
+        ),
+      );
       await sendAndConfirmTransaction(connection, tx, [user]);
     }
   } catch (error) {
@@ -381,22 +427,24 @@ export async function processEqualValueSwap(
   solAmount,
   token1Mint,
   token2Mint,
-  userPublicKey=user.publicKey.toString(),
+  userPublicKey = user.publicKey.toString(),
   swapOptions = {},
-  executeOptions = {}
+  executeOptions = {},
 ) {
   try {
-    console.log(`\n=== Processing ${token1Mint}-${token2Mint} equal value swap ===`);
+    console.log(
+      `\n=== Processing ${token1Mint}-${token2Mint} equal value swap ===`,
+    );
     console.log(`Input SOL amount: ${solAmount}`);
     console.log(`User: ${userPublicKey}`);
 
     // Check SOL balance
     const balance = await connection.getBalance(new PublicKey(userPublicKey));
     const minRequired = (solAmount + BIN_FEE_SOL) * SOL_LAMPORTS;
-    
+
     if (balance < minRequired) {
-      const msg = `Insufficient SOL balance. Need ${minRequired/SOL_LAMPORTS} SOL (Have ${balance/SOL_LAMPORTS} SOL)`;
-      if (telegramId) await sendMessage( msg);
+      const msg = `Insufficient SOL balance. Need ${minRequired / SOL_LAMPORTS} SOL (Have ${balance / SOL_LAMPORTS} SOL)`;
+      if (telegramId) await sendMessage(msg);
       throw new Error(msg);
     }
 
@@ -409,29 +457,41 @@ export async function processEqualValueSwap(
     }
 
     // Get quotes
-    const quoteResult = await getEqualValueQuotes(solAmount, token1Mint, token2Mint);
+    const quoteResult = await getEqualValueQuotes(
+      solAmount,
+      token1Mint,
+      token2Mint,
+    );
     const transactionsToExecute = [];
 
     // Create transactions
-    if (quoteResult.pairType === 'SOL-TOKEN') {
+    if (quoteResult.pairType === "SOL-TOKEN") {
       const targetSplit = quoteResult.splits.token;
       const swapTx = await createSwapTransaction(
         targetSplit.quote,
         userPublicKey,
-        swapOptions
+        swapOptions,
       );
       transactionsToExecute.push({
         type: `SOL_TO_TOKEN`,
-        swapTransaction: swapTx.swapTransaction
+        swapTransaction: swapTx.swapTransaction,
       });
     } else {
       const [swapTx1, swapTx2] = await Promise.all([
-        createSwapTransaction(quoteResult.splits.token1.quote, userPublicKey, swapOptions),
-        createSwapTransaction(quoteResult.splits.token2.quote, userPublicKey, swapOptions)
+        createSwapTransaction(
+          quoteResult.splits.token1.quote,
+          userPublicKey,
+          swapOptions,
+        ),
+        createSwapTransaction(
+          quoteResult.splits.token2.quote,
+          userPublicKey,
+          swapOptions,
+        ),
       ]);
       transactionsToExecute.push(
         { type: `SOL_TO_TOKEN1`, swapTransaction: swapTx1.swapTransaction },
-        { type: `SOL_TO_TOKEN2`, swapTransaction: swapTx2.swapTransaction }
+        { type: `SOL_TO_TOKEN2`, swapTransaction: swapTx2.swapTransaction },
       );
     }
 
@@ -440,29 +500,31 @@ export async function processEqualValueSwap(
     for (const tx of transactionsToExecute) {
       try {
         console.log(`\nExecuting ${tx.type}...`);
-        
+
         // Deserialize and sign
         const transaction = VersionedTransaction.deserialize(
-          Buffer.from(tx.swapTransaction, 'base64')
+          Buffer.from(tx.swapTransaction, "base64"),
         );
         transaction.sign([user]);
 
         // Simulate first
         const simulation = await connection.simulateTransaction(transaction);
         if (simulation.value.err) {
-          throw new Error(`Simulation failed: ${JSON.stringify(simulation.value.err)}`);
+          throw new Error(
+            `Simulation failed: ${JSON.stringify(simulation.value.err)}`,
+          );
         }
 
         // Execute
         const signature = await connection.sendTransaction(transaction, {
           skipPreflight: false,
-          ...executeOptions
+          ...executeOptions,
         });
 
         // Confirm
         const confirmation = await connection.confirmTransaction(
           signature,
-          executeOptions.commitment || 'confirmed'
+          executeOptions.commitment || "confirmed",
         );
 
         executionResults.push({
@@ -470,22 +532,22 @@ export async function processEqualValueSwap(
           success: true,
           signature,
           url: `https://solscan.io/tx/${signature}`,
-          confirmation
+          confirmation,
         });
 
         console.log(`✅ Success: ${signature}`);
-
       } catch (error) {
-        const errorMsg = error instanceof SendTransactionError 
-          ? `${error.message}\nLogs: ${error.logs?.join('\n') || 'none'}`
-          : error.message;
+        const errorMsg =
+          error instanceof SendTransactionError
+            ? `${error.message}\nLogs: ${error.logs?.join("\n") || "none"}`
+            : error.message;
 
         console.error(`❌ Failed: ${errorMsg}`);
 
         executionResults.push({
           type: tx.type,
           success: false,
-          error: errorMsg
+          error: errorMsg,
         });
 
         // Abort if first tx fails
@@ -499,14 +561,13 @@ export async function processEqualValueSwap(
       summary: {
         totalSolInput: solAmount,
         feesDeducted: BIN_FEE_SOL,
-        successCount: executionResults.filter(r => r.success).length,
-        failureCount: executionResults.filter(r => !r.success).length,
-        netSolBalance: balance/SOL_LAMPORTS - solAmount - BIN_FEE_SOL
-      }
+        successCount: executionResults.filter((r) => r.success).length,
+        failureCount: executionResults.filter((r) => !r.success).length,
+        netSolBalance: balance / SOL_LAMPORTS - solAmount - BIN_FEE_SOL,
+      },
     };
-
   } catch (error) {
-    console.error('❌ Process failed:', error.message);
+    console.error("❌ Process failed:", error.message);
     throw error;
   }
 }
@@ -520,7 +581,7 @@ export async function processEqualValueSwap(
 // console.log(await getTokenDecimalsFromMint(connection, new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"))); // USDC mint
 
 // Export functions
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     SOL_MINT,
     processEqualValueSwap,
@@ -528,6 +589,6 @@ if (typeof module !== 'undefined' && module.exports) {
     createSwapTransaction,
     getJupiterQuote,
     getTokenPriceInUsdc,
-    getTokenDecimalsFromMint
+    getTokenDecimalsFromMint,
   };
 }

@@ -15,7 +15,7 @@ if (!process.env.BOT_TOKEN) {
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 // Function to send a message to a specific chat
-export async function sendMessage( message) {
+export async function sendMessage(message) {
   try {
     await bot.telegram.sendMessage(chatId, message, { parse_mode: "Markdown" });
     console.log(`Message sent to ${chatId}`);
