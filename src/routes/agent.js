@@ -45,7 +45,7 @@ router.post("/prompt", async (req, res) => {
   try {
     const response = await runAgent(prompt);
     console.log("Response:", response);
-    await sendMessage(telegramId, response);
+    await sendMessage( response );
     res.json({ response });
   } catch (error) {
     console.error("Error in POST /:", error);
@@ -112,7 +112,7 @@ router.post("/add-liquidity", async (req, res) => {
       `https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"}`,
     );
     await sendMessage(
-      telegramId,
+
       `Liquidity added successfully: [explorer](https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"})`,
     );
 
@@ -160,7 +160,7 @@ router.post("/close-position", async (req, res) => {
       `https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"}`,
     );
     await sendMessage(
-      telegramId,
+
       `Liquidity added successfully: [explorer](https://explorer.solana.com/tx/${result}?cluster=${connection.rpcEndpoint.includes("devnet") ? "devnet" : "mainnet-beta"})`,
     );
     res.json({

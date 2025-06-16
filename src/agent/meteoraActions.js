@@ -8,6 +8,7 @@ import DLMM, {
 } from "@meteora-ag/dlmm";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { connection, user, USDC_USDT_POOL } from "../config/config.js";
+import { processEqualValueSwap } from "../lib/solTokenSplitter.js";
 
 export async function createBalancePosition(poolAddress, amount) {
   try {
@@ -18,12 +19,13 @@ export async function createBalancePosition(poolAddress, amount) {
     const poolInfo = await getTokensMintFromPoolAddress(connection, pool, {
       cluster: "mainnet-beta", // required to resolve the correct program ID
     });
-
+    
     const tokenXDecimals = await getTokenDecimals(
       connection,
       poolInfo.tokenXMint,
     );
     // const tokenYDecimals = await getTokenDecimals(connection, poolInfo.tokenYMint);
+    processEqualValueSwap(Number(amount), poolInfo.tokenXMint.toString(), poolInfo.tokenYMint.toString());
 
     const dlmmPool = await dlmm.create(connection, pool);
 
