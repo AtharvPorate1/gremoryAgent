@@ -103,7 +103,10 @@ router.post("/add-liquidity", async (req, res) => {
     console.log(
       "======================\n",
       "Creating position for token:",
-      tx.positionPubkey)
+      tx.positionPubkey,
+    tx.positionPubKey.toString(),
+      "\n======================",
+    );
 
     const result = await executeTransaction(
       connection,
@@ -128,6 +131,7 @@ router.post("/add-liquidity", async (req, res) => {
       name: poolName,
       poolAddress: tokenAddress,
       tgId: telegramId,
+      positionKey: tx.positionPubkey.toString(),
     });
 
     console.log(
