@@ -20,12 +20,16 @@ dotenv.config();
  *   tgId: "1234567890"
  * }).then(console.log).catch(console.error);
  */
-export async function createPoolViaAPI({ name, poolAddress, tgId }) {
+export async function createPoolViaAPI({ name, poolAddress, tgId, positionPubKey }) {
   // Validate required parameters
   if (!name || !poolAddress || !tgId) {
     throw new Error("Missing required parameters: name, poolAddress, or tgId");
   }
-
+  console.log("Creating pool via API with params:", {
+    name,
+    poolAddress,
+    tgId,
+  });
   try {
     const response = await fetch(
       "https://46a6-2402-8100-3135-1953-9135-d945-fb85-cc53.ngrok-free.app/api/agent/add-pool",
@@ -37,7 +41,8 @@ export async function createPoolViaAPI({ name, poolAddress, tgId }) {
         body: JSON.stringify({
           name,
           poolAddress,
-          tgId: tgId.toString(), // Ensure tgId is stringified (handles bigint)
+          tgId: tgId.toString(),
+          positionKey: positionPubKey // Ensure tgId is stringified (handles bigint)
         }),
       },
     );

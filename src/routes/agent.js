@@ -103,7 +103,7 @@ router.post("/add-liquidity", async (req, res) => {
     console.log(
       "======================\n",
       "Creating position for token:",
-      tx.positionPubkey,
+      
     tx.positionPubKey.toString(),
       "\n======================",
     );
@@ -124,6 +124,7 @@ router.post("/add-liquidity", async (req, res) => {
 
     const poolInfo = await getPoolInfo(tokenAddress);
     const poolName = poolInfo && poolInfo.name ? poolInfo.name : "New Pool";
+    const positionKey = await tx.positionPubKey.toString();
 
     console.log("Starting pool creation process...");
     //add worker to handle this later
@@ -131,7 +132,7 @@ router.post("/add-liquidity", async (req, res) => {
       name: poolName,
       poolAddress: tokenAddress,
       tgId: telegramId,
-      positionKey: tx.positionPubkey.toString(),
+      positionPubKey: positionKey,
     });
 
     console.log(
