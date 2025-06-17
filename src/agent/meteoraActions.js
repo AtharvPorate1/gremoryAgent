@@ -74,7 +74,7 @@ export async function createBalancePosition(poolAddress, amount) {
       });
     console.log("Create Position Transaction:", createPositionTx);
 
-    return { createPositionTx, newBalancePosition };
+    return { createPositionTx, newBalancePosition, positionPubKey: newBalancePosition.publicKey };
   } catch (error) {
     console.error("Error in createBalancePosition:", error);
     throw error;
@@ -122,43 +122,42 @@ export async function createImbalancedPosition(baseMint) {
   }
 }
 
-// export async function getUserPositions(poolAddress) {
-//   try {
-//     const dlmm = DLMM.default;
-//     console.log("poolAddress:", poolAddress);
-//     const pool = new PublicKey(poolAddress);
-//     const dlmmPool = await dlmm.create(connection, pool);
-// getpositi
-//     // Get all positions for the user
-//     // const { userPositions } = await getPositionsByUserAndLbPair(
-//     //   // user.publicKey,
-//     //   "FEZ9iQRnDBAWkj6dV47EKoB3L289s659PGr7CmV9j3Wa",
-//     // );
-//     ge
-//     if (!userPositions || userPositions.length === 0) {
-//       console.log("No positions found for this user");
-//       return [];
-//     }
+export async function getUserPositions(poolAddress) {
+  try {
+    const dlmm = DLMM.default;
+    console.log("poolAddress:", poolAddress);
+    const pool = new PublicKey(poolAddress);
+    const dlmmPool = await dlmm.create(connection, pool);
 
-//     // Format position data
-//     // const formattedPositions = userPositions.map(position => ({
-//     //   positionPubKey: position.publicKey,
-//     //   lbPair: position.positionData.lbPair,
-//     //   binData: position.positionData.positionBinData,
-//     //   createdAt: new Date(position.positionData.createdAt.toNumber() * 1000),
-//     //   lastUpdatedAt: new Date(position.positionData.lastUpdatedAt.toNumber() * 1000)
-//     // }));
+    // Get all positions for the user
+    const { userPositions } = await dlmmPool.getPositionsByUserAndLbPair(
+      // user.publicKey,
+      "FEZ9iQRnDBAWkj6dV47EKoB3L289s659PGr7CmV9j3Wa",
+    );
+    ge
+    if (!userPositions || userPositions.length === 0) {
+      console.log("No positions found for this user");
+      return [];
+    }
 
-//     return { userPositions };
-//   } catch (error) {
-//     console.error("Error in getUserPositions:", error);
-//     throw error;
-//   }
-// }
+    // Format position data
+    // const formattedPositions = userPositions.map(position => ({
+    //   positionPubKey: position.publicKey,
+    //   lbPair: position.positionData.lbPair,
+    //   binData: position.positionData.positionBinData,
+    //   createdAt: new Date(position.positionData.createdAt.toNumber() * 1000),
+    //   lastUpdatedAt: new Date(position.positionData.lastUpdatedAt.toNumber() * 1000)
+    // }));
 
-// getUserPositions(USDC_USDT_POOL.toString());
+    return { userPositions };
+  } catch (error) {
+    console.error("Error in getUserPositions:", error);
+    throw error;
+  }
+}
 
-// need to work on this
+
+
 export async function addLiquidityToPosition(
   positionPubKey,
   baseMint,

@@ -444,8 +444,8 @@ export async function processEqualValueSwap(
 
     if (balance < minRequired) {
       const msg = `Insufficient SOL balance. Need ${minRequired / SOL_LAMPORTS} SOL (Have ${balance / SOL_LAMPORTS} SOL)`;
-      if (telegramId) await sendMessage(msg);
-      throw new Error(msg);
+      await sendMessage(msg);
+      
     }
 
     // Ensure token accounts exist

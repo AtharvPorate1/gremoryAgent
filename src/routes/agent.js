@@ -100,6 +100,10 @@ router.post("/add-liquidity", async (req, res) => {
 
   try {
     const tx = await createBalancePosition(tokenAddress, amount);
+    console.log(
+      "======================\n",
+      "Creating position for token:",
+      tx.positionPubkey)
 
     const result = await executeTransaction(
       connection,
@@ -117,6 +121,7 @@ router.post("/add-liquidity", async (req, res) => {
 
     const poolInfo = await getPoolInfo(tokenAddress);
     const poolName = poolInfo && poolInfo.name ? poolInfo.name : "New Pool";
+
     console.log("Starting pool creation process...");
     //add worker to handle this later
     const poolcreationres = await createPoolViaAPI({
