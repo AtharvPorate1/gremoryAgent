@@ -122,34 +122,30 @@ export async function createImbalancedPosition(baseMint) {
   }
 }
 
-export async function getUserPositions(poolAddress) {
+export async function getUserPositions(connection, poolAddress, userPublicKey) {
   try {
     const dlmm = DLMM.default;
-    console.log("poolAddress:", poolAddress);
-    const pool = new PublicKey(poolAddress);
-    const dlmmPool = await dlmm.create(connection, pool);
+    console.log("Pool Address:", poolAddress);
+    console.log("User Public Key:", userPublicKey);
+
+    // Convert addresses to PublicKey objects
+    const poolPubKey = new PublicKey(poolAddress);
+    const userPubKey = new PublicKey(userPublicKey);
+
+    const dlmmPool = await dlmm.create(connection, poolPubKey);
 
     // Get all positions for the user
-    const { userPositions } = await dlmmPool.getPositionsByUserAndLbPair(
-      // user.publicKey,
-      "FEZ9iQRnDBAWkj6dV47EKoB3L289s659PGr7CmV9j3Wa",
+    const positions = await dlmmPool.getPositionsByUserAndLbPair(
+      userPubKey,  // Must be a PublicKey object
+      poolPubKey   // Must be a PublicKey object
     );
-    ge
-    if (!userPositions || userPositions.length === 0) {
-      console.log("No positions found for this user");
+    
+    if (!positions || !positions.userPositions || positions.userPositions.length === 0) {
+      console.log("No positions found for this user in this pool");
       return [];
     }
 
-    // Format position data
-    // const formattedPositions = userPositions.map(position => ({
-    //   positionPubKey: position.publicKey,
-    //   lbPair: position.positionData.lbPair,
-    //   binData: position.positionData.positionBinData,
-    //   createdAt: new Date(position.positionData.createdAt.toNumber() * 1000),
-    //   lastUpdatedAt: new Date(position.positionData.lastUpdatedAt.toNumber() * 1000)
-    // }));
-
-    return { userPositions };
+    return positions.userPositions;
   } catch (error) {
     console.error("Error in getUserPositions:", error);
     throw error;
@@ -210,16 +206,16 @@ export async function addLiquidityToPosition(
   }
 }
 
-export async function removeLiquidity(positionPubKey, options = {}) {
+export async function removeLiquidity(poolAddress, positionPubKey, liquidityPercentage , options = {}) {
   try {
     const {
       shouldClaimAndClose = true,
-      liquidityPercentage = 100, // 100% by default
+      liquidityPercentage = liquidityPercentage || 100, // 100% by default
       skipPreflight = false,
     } = options;
 
     const dlmm = DLMM.default;
-    const dlmmPool = await dlmm.create(connection, USDC_USDT_POOL);
+    const dlmmPool = await dlmm.create(connection, new PublicKey(poolAddress));
 
     // Get user positions
     const { userPositions } = await dlmmPool.getPositionsByUserAndLbPair(

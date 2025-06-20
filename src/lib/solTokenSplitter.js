@@ -14,7 +14,7 @@ import { sendMessage } from "../config/telegram.js";
 import { getTokenDecimals } from "@meteora-ag/dlmm";
 
 // const telegramId = process.env.AGENT_TG_ID;
-const SOL_MINT = "So11111111111111111111111111111111111111112"; // Hardcoded SOL mint
+export const SOL_MINT = "So11111111111111111111111111111111111111112"; // Hardcoded SOL mint
 const SOL_DECIMALS = 1_000_000_000; // 9 decimals
 
 // Jupiter API URLs
@@ -330,7 +330,7 @@ async function getEqualValueQuotes(solAmount, token1Mint, token2Mint) {
  * @param {Object} options - Additional options for transaction optimization
  * @returns {Promise<Object>} Swap response with serialized transaction
  */
-async function createSwapTransaction(
+export async function createSwapTransaction(
   quoteResponse,
   userPublicKey,
   options = {},
